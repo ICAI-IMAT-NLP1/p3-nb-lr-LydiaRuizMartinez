@@ -79,7 +79,9 @@ class SentimentExample:
         raise NotImplemented
 
 
-def evaluate_classification(predictions: torch.Tensor, labels: torch.Tensor) -> Dict[str, float]:
+def evaluate_classification(
+    predictions: torch.Tensor, labels: torch.Tensor
+) -> Dict[str, float]:
     """
     Evaluate classification metrics including accuracy, precision, recall, and F1-score.
 
@@ -90,6 +92,34 @@ def evaluate_classification(predictions: torch.Tensor, labels: torch.Tensor) -> 
     Returns:
         dict: A dictionary containing the calculated metrics.
     """
-    metrics: Dict[str, float] = None
+
+    predictions = predictions.int()
+    labels = labels.int()
+
+    # compute TP, FP, TN and FN
+    TP: int = torch.sum((predictions == 1) & (labels == 1)).item()
+    FP: int = torch.sum((predictions == 1) & (labels == 0)).item()
+    TN: int = torch.sum((predictions == 0) & (labels == 0)).item()
+    FN: int = torch.sum((predictions == 0) & (labels == 1)).item()
+
+    # calculate metrics
+    accuracy: float = (
+        (TP + TN) / (TP + TN + FP + FN) if (TP + TN + FP + FN) > 0 else 0.0
+    )
+    precision: float = TP / (TP + FP) if (TP + FP) > 0 else 0.0
+    recall: float = TP / (TP + FN) if (TP + FN) > 0 else 0.0
+    f1_score: float = (
+        (2 * precision * recall) / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    # store metrics
+    metrics: Dict[str, float] = {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1_score,
+    }
 
     return metrics
